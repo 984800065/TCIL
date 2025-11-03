@@ -1,5 +1,5 @@
 exp:
-  name: "ImageNet100_B0_10S_TCIL"
+  name: "TinyImagenet200_B0_40S_TCIL"
   savedir: "./logs"
   tensorboard_dir: "./tensorboard"
   debug: False
@@ -53,10 +53,10 @@ scheduling:
   - 180
 lr_decay: 0.1
 optimizer: "sgd"
-epochs: 2
+epochs: 200
 resampling: False
 warmup: True
-warmup_epochs: 1
+warmup_epochs: 20
 
 postprocessor:
   enable: True

@@ -256,54 +256,36 @@ def compute_accuracy(ypred, ytrue, increments, n_classes):
 
 
 def make_logger(log_name, savedir='.logs/'):
-    """Set up the logger for saving log file on the disk
-    Args:
-        cfg: configuration dict
+    """Create a loguru logger with colored console and file sinks.
 
-    Return:
-        logger: a logger for record essential information
+    Console: colored time | level | file.path:line | function - message
+    File:    same format (no color) at savedir/{log_name}.log
     """
-    import logging
     import os
-    from logging.config import dictConfig
-    import time
+    import sys
+    from loguru import logger
 
-    logging_config = dict(
-        version=1,
-        formatters={'f_t': {
-            'format': '\n %(asctime)s | %(levelname)s | %(name)s \t %(message)s'
-        }},
-        handlers={
-            'stream_handler': {
-                'class': 'logging.StreamHandler',
-                'formatter': 'f_t',
-                'level': logging.INFO
-            },
-            'file_handler': {
-                'class': 'logging.FileHandler',
-                'formatter': 'f_t',
-                'level': logging.INFO,
-                'filename': None,
-            }
-        },
-        root={
-            'handlers': ['stream_handler', 'file_handler'],
-            'level': logging.DEBUG,
-        },
-    )
-    # set up logger
-    log_file = '{}.log'.format(log_name)
-    # if folder not exist,create it
     if not os.path.exists(savedir):
         os.makedirs(savedir)
-    log_file_path = os.path.join(savedir, log_file)
+    log_file_path = os.path.join(savedir, f"{log_name}.log")
 
-    logging_config['handlers']['file_handler']['filename'] = log_file_path
+    # Reset existing handlers to avoid duplicate logs
+    logger.remove()
 
-    open(log_file_path, 'w').close()  # Clear the content of logfile
-    # get logger from dictConfig
-    dictConfig(logging_config)
+    console_format = (
+        "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
+        "<level>{level:<8}</level> | "
+        "<cyan>{file.path}</cyan>:<cyan>{line}</cyan> | "
+        "<cyan>{function}</cyan> - "
+        "<level>{message}</level>"
+    )
+    file_format = (
+        "{time:YYYY-MM-DD HH:mm:ss.SSS} | "
+        "{level:<8} | "
+        "{file.path}:{line} | {function} - {message}"
+    )
 
-    logger = logging.getLogger()
+    logger.add(sys.stdout, level="INFO", colorize=True, format=console_format)
+    logger.add(log_file_path, level="INFO", colorize=False, format=file_format)
 
     return logger

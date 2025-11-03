@@ -86,6 +86,14 @@ def _train(cfg, _run, ex, tensorboard):
     avg_acc = []
     for task_i in range(inc_dataset.n_tasks):
         task_info, train_loader, val_loader, test_loader = inc_dataset.new_task()
+        train_label_set = set()
+        test_label_set = set()
+        for train_item in train_loader:
+            train_label_set.update(train_item[1].tolist())
+        for test_item in test_loader:
+            test_label_set.update(test_item[1].tolist())
+        ex.logger.info(f"train_label_set: {train_label_set}")
+        ex.logger.info(f"test_label_set: {test_label_set}")
 
         model.set_task_info(
             task=task_info["task"],

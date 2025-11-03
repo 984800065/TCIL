@@ -1,4 +1,5 @@
 import os.path as osp
+import os
 import numpy as np
 import glob
 
@@ -225,15 +226,46 @@ class iTinyImageNet200(DataHandler):
 
     def __init__(self, data_folder, train, is_fine_label=False):
         # 期望目录结构：data_folder/{train|val}/<class>/<images>
+        _, class_to_idx = self.find_classes(os.path.join(data_folder, 'wnids.txt'))
+        images = []
         if train is True:
-            self.base_dataset = self.base_dataset_cls(osp.join(data_folder, "train"))
+            dir_path = os.path.join(data_folder, "train")
+            for fname in sorted(os.listdir(dir_path)):
+                cls_fpath = os.path.join(dir_path, fname)
+                if os.path.isdir(cls_fpath):
+                    cls_imgs_path = os.path.join(cls_fpath, 'images')
+                    for imgname in sorted(os.listdir(cls_imgs_path)):
+                        path = os.path.join(cls_imgs_path, imgname)
+                        item = (path, class_to_idx[fname])
+                        images.append(item)
         else:
-            self.base_dataset = self.base_dataset_cls(osp.join(data_folder, "val"))
+            dir_path = os.path.join(data_folder, "val")
+            imgs_path = os.path.join(dir_path, 'images')
+            imgs_annotations = os.path.join(dir_path, 'val_annotations.txt')
 
-        self.data, self.targets = zip(*self.base_dataset.samples)
+            with open(imgs_annotations) as r:
+                data_info = map(lambda s: s.split('\t'), r.readlines())
+
+            cls_map = {line_data[0]: line_data[1] for line_data in data_info}
+
+            for imgname in sorted(os.listdir(imgs_path)):
+                path = os.path.join(imgs_path, imgname)
+                item = (path, class_to_idx[cls_map[imgname]])
+                images.append(item)
+
+        self.data, self.targets = zip(*images)
         self.data = np.array(self.data)
         self.targets = np.array(self.targets)
         self.n_cls = 200
+
+    def find_classes(self, class_file):
+        with open(class_file) as r:
+            classes = list(map(lambda s: s.strip(), r.readlines()))
+
+        classes.sort()
+        class_to_idx = {classes[i]: i for i in range(len(classes))}
+
+        return classes, class_to_idx
 
     @property
     def is_proc_inc_data(self):
