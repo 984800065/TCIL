@@ -10,6 +10,7 @@ python -m main train with "./configs/${expid}.yaml" \
     exp.ckptdir="./logs/" \
     exp.tensorboard_dir="./tensorboard/" \
     exp.debug=True \
+    device="0" \
     --name="${name}" \
     -D \
     -p \
