@@ -219,6 +219,8 @@ def compute_accuracy(ypred, ytrue, increments, n_classes):
 
     # for class_id in range(0, np.max(ytrue), task_size):
     start, end = 0, 0
+    # last_acc: 每个任务区间（增量段）的 top1 准确率列表
+    last_acc = []
     for i in range(len(increments)):
         if increments[i] <= 0:
             pass
@@ -241,6 +243,14 @@ def compute_accuracy(ypred, ytrue, increments, n_classes):
             all_acc["top1"][label] = round(top1_acc, 3)
             all_acc["top5"][label] = round(cur_acc_meter.value()[1], 3)
             # all_acc[label] = round((ypred[idxes] == ytrue[idxes]).sum() / len(idxes), 3)
+
+            # 收集每个任务区间的 top1 作为 last_acc 的一项
+            last_acc.append(top1_acc)
+
+    # 扩展返回结构，兼容原有字段
+    all_acc["last_acc"] = last_acc
+    last_acc_mean = np.mean(last_acc)
+    all_acc["last_acc_mean"] = last_acc_mean
 
     return all_acc
 

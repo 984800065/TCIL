@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-name='cifar_b50_2s'
-expid='cifar_b50_2s'
+name='cifar_b0_20s'
+expid='cifar_b0_20s'
 
 
 python -m main train with "./configs/${expid}.yaml" \
@@ -10,7 +10,6 @@ python -m main train with "./configs/${expid}.yaml" \
     exp.ckptdir="./logs/" \
     exp.tensorboard_dir="./tensorboard/" \
     exp.debug=True \
-    device="0" \
     --name="${name}" \
     -D \
     -p \

@@ -21,6 +21,8 @@ def get_dataset(dataset_name):
         return iCIFAR100
     elif "imagenet100" in dataset_name:
         return iImageNet100
+    elif dataset_name == "tinyimagenet200":
+        return iTinyImageNet200
     else:
         raise NotImplementedError("Unknown dataset {}.".format(dataset_name))
 
@@ -195,3 +197,49 @@ class iImageNet100(DataHandler):
             98, 97, 2, 64, 66, 42, 22, 35, 86, 24, 34, 87, 21, 99, 0, 88, 27, 18, 94, 11, 12, 47, 25, 30, 46, 62, 69,
             36, 61, 7, 63, 75, 5, 32, 4, 51, 48, 73, 93, 39, 67, 29, 49, 57, 33
         ]
+
+
+class iTinyImageNet200(DataHandler):
+    base_dataset_cls = datasets.ImageFolder
+    transform_type = 'torchvision'
+    train_transforms = transforms.Compose([
+        transforms.ToPILImage(),
+        transforms.ToTensor(),
+        Cutout(n_holes=1, length=8),
+        transforms.ToPILImage(),
+        transforms.RandomResizedCrop(64),
+        transforms.RandomHorizontalFlip(),
+        ImageNetPolicy(),
+        transforms.ToTensor(),
+        transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+    ])
+    test_transforms = transforms.Compose([
+        transforms.ToPILImage(),
+        transforms.ToTensor(),
+        transforms.ToPILImage(),
+        transforms.Resize(64),
+        transforms.CenterCrop(64),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    ])
+
+    def __init__(self, data_folder, train, is_fine_label=False):
+        # 期望目录结构：data_folder/{train|val}/<class>/<images>
+        if train is True:
+            self.base_dataset = self.base_dataset_cls(osp.join(data_folder, "train"))
+        else:
+            self.base_dataset = self.base_dataset_cls(osp.join(data_folder, "val"))
+
+        self.data, self.targets = zip(*self.base_dataset.samples)
+        self.data = np.array(self.data)
+        self.targets = np.array(self.targets)
+        self.n_cls = 200
+
+    @property
+    def is_proc_inc_data(self):
+        return False
+
+    @classmethod
+    def class_order(cls, trial_i):
+        # 默认顺序 0..199；如需固定顺序，可在此处替换
+        return list(range(200))
