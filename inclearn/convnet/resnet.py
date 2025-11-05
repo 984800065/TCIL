@@ -178,6 +178,15 @@ class ResNet(nn.Module):
         if 'cifar' in dataset:
             self.conv1 = nn.Sequential(nn.Conv2d(3, nf, kernel_size=3, stride=1, padding=1, bias=False),
                                        nn.BatchNorm2d(nf), nn.ReLU(inplace=True))
+        elif 'tinyimagenet' in dataset.lower():
+            # TinyImageNet: 64x64 input, use 3x3 conv + MaxPool for moderate downsampling
+            # 64x64 -> 64x64 (conv) -> 32x32 (MaxPool) -> layer1-4 -> AdaptiveAvgPool
+            self.conv1 = nn.Sequential(
+                nn.Conv2d(3, nf, kernel_size=3, stride=1, padding=1, bias=False),
+                nn.BatchNorm2d(nf),
+                nn.ReLU(inplace=True),
+                nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
+            )
         elif 'imagenet' in dataset:
             if start_class == 0:
                 self.conv1 = nn.Sequential(
