@@ -98,4 +98,4 @@ Thumbs.db
 # Images cache or large artifacts (keep source images by default)
 # !pictures/
 
-
+*.gz
