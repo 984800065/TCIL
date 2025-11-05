@@ -15,7 +15,7 @@ from tensorboardX import SummaryWriter
 import os
 import inclearn.prune as pruning
 
-os.environ['CUDA_VISIBLE_DEVICES']='1'
+# os.environ['CUDA_VISIBLE_DEVICES']='1'
 
 repo_name = 'TCIL'
 base_dir = osp.realpath(".")[:osp.realpath(".").index(repo_name) + len(repo_name)]
