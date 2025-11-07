@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-name='cifar_b0_20s'
-expid='cifar_b0_20s'
+name='cifar_b0_5s'
+expid='cifar_b0_5s'
 
 
 python -m main train with "./configs/${expid}.yaml" \
