@@ -150,7 +150,7 @@ class IncrementalDataset:
         self.data_test, self.targets_test = [], []
         self.data_val, self.targets_val = [], []
         self.increments = []
-        self.class_order = []
+        self.class_order = "Original Order"
 
         current_class_idx = 0  # When using multiple datasets
         train_dataset = dataset(self.data_folder, train=True)
@@ -177,16 +177,16 @@ class IncrementalDataset:
 
         # Get Class Order
         order = [i for i in range(len(np.unique(y_train)))]
-        if self.random_order:
-            random.seed(self._seed)  # Ensure that following order is determined by seed:
-            random.shuffle(order)
-        elif dataset.class_order(self.trial_i) is not None:
-            order = dataset.class_order(self.trial_i)
+        # if self.random_order:
+        #     random.seed(self._seed)  # Ensure that following order is determined by seed:
+        #     random.shuffle(order)
+        # elif dataset.class_order(self.trial_i) is not None:
+        #     order = dataset.class_order(self.trial_i)
 
-        self.class_order.append(order)
-        y_train = self._map_new_class_index(y_train, order)
-        y_val = self._map_new_class_index(y_val, order)
-        y_test = self._map_new_class_index(y_test, order)
+        # self.class_order.append(order)
+        # y_train = self._map_new_class_index(y_train, order)
+        # y_val = self._map_new_class_index(y_val, order)
+        # y_test = self._map_new_class_index(y_test, order)
 
         y_train += current_class_idx
         y_val += current_class_idx

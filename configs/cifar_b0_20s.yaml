@@ -81,7 +81,7 @@ workers: 4
 validation: 0 # Validation split (0. <= x <= 1.)
 random_classes: False #Randomize classes order of increment
 start_class: 0 # number of tasks for the first step, start from 0.
-start_task: 0
+start_task: 16
 max_task: # Cap the number of task
 
 #Memory

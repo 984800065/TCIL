@@ -15,7 +15,7 @@ from tensorboardX import SummaryWriter
 import os
 import inclearn.prune as pruning
 
-os.environ['CUDA_VISIBLE_DEVICES']='1'
+os.environ['CUDA_VISIBLE_DEVICES']='0'
 
 repo_name = 'TCIL'
 base_dir = osp.realpath(".")[:osp.realpath(".").index(repo_name) + len(repo_name)]
@@ -84,6 +84,7 @@ def _train(cfg, _run, ex, tensorboard):
     results = results_utils.get_template_results(cfg)
 
     avg_acc = []
+    pred_target_tag_pair_list: list[list[tuple[int, int]]] = []
     for task_i in range(inc_dataset.n_tasks):
         task_info, train_loader, val_loader, test_loader = inc_dataset.new_task()
         train_label_set = set()
@@ -124,6 +125,16 @@ def _train(cfg, _run, ex, tensorboard):
         ex.logger.info("Eval on {}->{}.".format(0, task_info["max_class"]))
 
         ypred, ytrue = model.eval_task(test_loader)
+        ypred: np.ndarray
+        ytrue: np.ndarray
+        ex.logger.info(f"ypred: {ypred.shape}, ytrue: {ytrue.shape}")
+
+        pred_idx = ypred.argmax(axis=1).tolist()
+        target_idx = ytrue.tolist()
+        tmp_pred_target_tag_pair_list: list[tuple[int, int]] = list(zip(pred_idx, target_idx))
+        # ex.logger.info(f"tmp_pred_target_tag_pair_list: {tmp_pred_target_tag_pair_list}")
+        ex.logger.info(f"len(tmp_pred_target_tag_pair_list): {len(tmp_pred_target_tag_pair_list)}")
+        pred_target_tag_pair_list.append(tmp_pred_target_tag_pair_list)
 
         acc_stats = utils.compute_accuracy(ypred, ytrue, increments=model._increments, n_classes=model._n_classes)
         avg_acc.append(np.mean(acc_stats["last_acc"]))
@@ -142,6 +153,24 @@ def _train(cfg, _run, ex, tensorboard):
         ex.logger.info(f"task: {task_i} last_acc: {last_acc}")
 
         results["results"].append(acc_stats)
+
+    def get_tasked_per_sample_results(pred_target_tag_pair_list: list[list[tuple[int, int]]]) -> np.ndarray:
+        tasked_per_sample_results = -1 * np.ones((len(pred_target_tag_pair_list), len(pred_target_tag_pair_list[-1]), 2), dtype=np.int32)
+        for i in range(len(pred_target_tag_pair_list)):
+            for j in range(len(pred_target_tag_pair_list[i])):
+                tasked_per_sample_results[i, j, 0] = pred_target_tag_pair_list[i][j][0]
+                tasked_per_sample_results[i, j, 1] = pred_target_tag_pair_list[i][j][1]
+        return tasked_per_sample_results
+
+    tasked_per_sample_results = get_tasked_per_sample_results(pred_target_tag_pair_list)
+    tasked_per_sample_results_folder_path = os.path.join("results", "{}_{}".format(utils.get_date(), cfg["exp"]["name"]))
+    tasked_per_sample_results_path = os.path.join(tasked_per_sample_results_folder_path, "tasked_per_sample_results.npy")
+    if not os.path.exists(tasked_per_sample_results_folder_path):
+        os.makedirs(tasked_per_sample_results_folder_path)
+    ex.logger.info(f"tasked_per_sample_results saved to {tasked_per_sample_results_path}")
+    ex.logger.info(f"tasked_per_sample_results.shape: {tasked_per_sample_results.shape}")
+    # save tasked_per_sample_results to npy
+    np.save(tasked_per_sample_results_path, tasked_per_sample_results)
 
     avg_acc_mean = np.mean(avg_acc)
     last_acc_mean = np.mean(last_acc)
@@ -267,8 +296,8 @@ def prune(_run, _rnd, _seed):
     cfg.data_folder = osp.join(base_dir, "data")
     inc_dataset = factory.get_data(cfg, trial_i)
 
-    #ex.logger.info("classes_order")
-    #ex.logger.info(inc_dataset.class_order)
+    ex.logger.info("classes_order")
+    ex.logger.info(inc_dataset.class_order)
 
     model = factory.get_model(cfg, trial_i, _run, ex, tensorboard, inc_dataset)
     tmodel = factory.get_model(cfg, trial_i, _run, ex, tensorboard, inc_dataset)
